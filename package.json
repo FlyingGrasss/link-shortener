@@ -1,0 +1,27 @@
+{
+  "name": "link-shortener",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Small self-contained URL shortener with SQLite storage",
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "smoke": "tsx src/smoke.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.2.0",
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
