@@ -187,3 +187,25 @@ SQLite and the in-memory rate limiter make this a single-process application:
 - Back up `data/links.db` together with its `-wal` and `-shm` files, or use SQLite's online backup mechanism.
 - Point the platform health check at `GET /`, which returns the landing page with `200`.
 - The rate limit resets on restart and is per process. If you later need multiple instances, move storage to a shared database and rate limiting to a shared store.
+
+## Docker deployment
+
+The repository includes `Dockerfile`, `.dockerignore`, and `docker-compose.yml`. The image is based on `node:26-slim`, sets `NODE_ENV=production`, and runs as the non-root `node` user (UID 1000). No secrets are baked into the image.
+
+```bash
+cat > .env <<'EOF'
+ADMIN_TOKEN=replace-with-a-long-random-token
+BASE_URL=https://kisa.example.com
+TRUST_PROXY=1
+EOF
+
+docker compose up -d --build
+docker compose logs -f app
+```
+
+- Published port: `4200` only.
+- Required environment: `ADMIN_TOKEN` (the compose file uses `${ADMIN_TOKEN:?...}` and stops if it is unset). Set `BASE_URL` to the public origin; set `TRUST_PROXY=1` when exactly one trusted reverse proxy is in front.
+- Persistence: the host `./data` directory is bind-mounted at `/app/data`, where `links.db`, `links.db-wal`, and `links.db-shm` live. Back up all three together. On Linux, create the directory with UID 1000 ownership: `mkdir -p data && sudo chown -R 1000:1000 data`.
+- Health check: `GET /` on port 4200 (the app has no dedicated health route).
+- Reverse proxy: terminate TLS and forward to the container on port 4200. A commented Caddy example is included in `docker-compose.yml`. Keep this at one instance; SQLite and the in-memory rate limiter are single-process.
+- Stop with `docker compose down` (the volume survives).

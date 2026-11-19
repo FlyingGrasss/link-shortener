@@ -1,0 +1,41 @@
+name: link-shortener
+
+services:
+  app:
+    build:
+      context: .
+    image: link-shortener:latest
+    environment:
+      NODE_ENV: production
+      PORT: "4200"
+      # Public origin used to build short links, e.g. https://kisa.example.com
+      BASE_URL: "${BASE_URL:-}"
+      # Required: compose refuses to start when ADMIN_TOKEN is unset.
+      ADMIN_TOKEN: "${ADMIN_TOKEN:?Set ADMIN_TOKEN to a long random value}"
+      # Set to 1 when exactly one trusted reverse proxy sits in front.
+      TRUST_PROXY: "${TRUST_PROXY:-}"
+    ports:
+      - "4200:4200"
+    volumes:
+      # SQLite database lives in ./data/links.db on the host.
+      - ./data:/app/data
+    restart: unless-stopped
+    stop_grace_period: 10s
+    healthcheck:
+      # The app has no /api/health route; the landing page returns 200.
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:4200/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# Reverse proxy example (Caddy), run on the same Docker network or on the host:
+#
+# kisa.example.com {
+#     encode zstd gzip
+#     reverse_proxy app:4200
+# }
+#
+# Set TRUST_PROXY=1 and BASE_URL=https://kisa.example.com in .env when using it.
+# Run as UID 1000: on Linux make the bind mount writable first:
+#   mkdir -p data && sudo chown -R 1000:1000 data
