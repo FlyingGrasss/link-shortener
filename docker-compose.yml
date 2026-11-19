@@ -15,7 +15,7 @@ services:
       # Set to 1 when exactly one trusted reverse proxy sits in front.
       TRUST_PROXY: "${TRUST_PROXY:-}"
     ports:
-      - "4200:4200"
+      - "${HOST_PORT:-4200}:4200"
     volumes:
       # SQLite database lives in ./data/links.db on the host.
       - ./data:/app/data
